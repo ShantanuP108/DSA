@@ -1,0 +1,35 @@
+#include<iostream/bits.c++.h>
+using namespace std;
+
+  int secomndLargest(vector<int> & arr, int n){
+  int Largest = arr[0];
+  int slargest = -1;
+  for(i=0; i<n; i++){
+         if(a[i]> largest){
+           slargest = largest;
+           largest = arr[i];
+           }
+           else if (arr[i] < largest && arr[i] > slargest){
+           slargest = arr[i];
+           }
+  }
+  return slargest;
+}  
+  int secondSmallest(vector<int> &arr,  int n){
+  int smallest = arr[0];
+  int smallest =  INT_MAX;
+  for(int i = 1; i<n; i++){
+  if(arr[i] < smallest){
+  ssmallest = smallest;
+  smallest = arr[i];
+  }
+  else if(a[i] != smallest && a[i]< smallest){
+  ssmallest = a[i];
+  }
+  }
+  
+ vector<int> SecondLargestElement(vector<int> &arr, int n)
+ int slargest = secondLargest(arr , n);
+ int ssmallest = secondSmallest(arr, n);
+ return (slargest, ssmallest);
+ 
