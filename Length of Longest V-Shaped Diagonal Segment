@@ -1,0 +1,36 @@
+from functools import lru_cache
+class Solution:
+    def lenOfVDiagonal(self, grid: List[List[int]]) -> int:
+        n, m = len(grid), len(grid[0])
+        dirs = [(1, 1), (1, -1), (-1, -1), (-1, 1)]  # ↘ ↙ ↖ ↗
+
+        @lru_cache(None)
+        def dfs(r, c, d, turned, expected):
+            # Out of bounds or mismatch
+            if not (0 <= r < n and 0 <= c < m and grid[r][c] == expected):
+                return 0
+
+            # Next expected value alternates: 1 → 2 → 0 → 2 → 0...
+            next_expected = 2 if expected == 1 or expected == 0 else 0
+
+            # Move straight in the same direction
+            dr, dc = dirs[d]
+            straight = 1 + dfs(r + dr, c + dc, d, turned, next_expected)
+
+            # Try a 90° clockwise turn if not already turned
+            turned_path = 0
+            if not turned:
+                new_d = (d + 1) % 4
+                dr2, dc2 = dirs[new_d]
+                turned_path = 1 + dfs(r + dr2, c + dc2, new_d, True, next_expected)
+
+            return max(straight, turned_path)
+
+        longest = 0
+        for i in range(n):
+            for j in range(m):
+                if grid[i][j] == 1:
+                    for d in range(4):
+                        longest = max(longest, dfs(i, j, d, False, 1))
+
+        return longest
