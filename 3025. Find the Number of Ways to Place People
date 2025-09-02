@@ -1,0 +1,31 @@
+class Solution:
+    def numberOfPairs(self, points: List[List[int]]) -> int:
+        n = len(points)
+        ans = 0
+
+        for i in range(n):  # A
+            x1, y1 = points[i]
+            for j in range(n):  # B
+                if i == j:
+                    continue
+                x2, y2 = points[j]
+
+                # A must be upper-left of B (allow same row/col)
+                if x1 <= x2 and y1 >= y2:
+                    xlo, xhi = min(x1, x2), max(x1, x2)  # here xlo=x1, xhi=x2
+                    ylo, yhi = min(y1, y2), max(y1, y2)  # here ylo=y2, yhi=y1
+
+                    empty = True
+                    for k in range(n):
+                        if k == i or k == j:
+                            continue
+                        x, y = points[k]
+                        # No other point allowed in/on the rectangle (inclusive)
+                        if xlo <= x <= xhi and ylo <= y <= yhi:
+                            empty = False
+                            break
+
+                    if empty:
+                        ans += 1
+
+        return ans
