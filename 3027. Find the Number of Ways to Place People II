@@ -1,0 +1,62 @@
+from typing import List
+
+class Solution:
+    def numberOfPairs(self, points: List[List[int]]) -> int:
+        """
+        Calculates the number of ways to place Alice and Bob such that no other person
+        is inside or on the fence they create.
+
+        Alice's position must be the upper-left corner and Bob's the lower-right.
+        This means for Alice at (ax, ay) and Bob at (bx, by), we must have ax <= bx and ay >= by.
+        The fence is valid if no other point (px, py) satisfies ax <= px <= bx and by <= py <= ay.
+
+        The approach is as follows:
+        1. Sort the points primarily by their x-coordinate in ascending order.
+           For points with the same x-coordinate, sort by their y-coordinate in descending order.
+           This places points from left-to-right, and for vertical lines, from top-to-bottom.
+
+        2. Iterate through each point `p_i` and consider it as Alice.
+
+        3. For each Alice `p_i`, iterate through all subsequent points `p_j` (where j > i)
+           and consider them as potential Bobs.
+           - The sorting ensures Alice's x-coordinate is less than or equal to Bob's (ax <= bx).
+
+        4. We only need to check two conditions for each potential pair (p_i, p_j):
+           a) Alice's y-coordinate must be greater than or equal to Bob's (ay >= by).
+           b) There must be no other point `p_k` (where i < k < j) inside the rectangle.
+              A point `p_k` is inside if its y-coordinate `yk` is between `by` and `ay`.
+
+        5. To efficiently check condition (b), for each Alice `p_i`, we track the highest
+           y-coordinate of any valid Bob found so far (`max_y_of_bob`). A new point `p_j`
+           can form a valid pair only if its y-coordinate `by` is lower than this `max_y_of_bob`.
+           This ensures that any previously found valid Bob `p_k` is above the current Bob `p_j`,
+           and therefore not inside the new fence.
+
+        This optimized check reduces the complexity from O(n^3) to O(n^2).
+        """
+        # Sort by x ascending, then y descending
+        points.sort(key=lambda p: (p[0], -p[1]))
+        
+        n = len(points)
+        count = 0
+        
+        for i in range(n):
+            alice_x, alice_y = points[i]
+            # This will store the highest y-coordinate of a valid Bob found so far for the current Alice.
+            # We initialize to negative infinity for each new Alice.
+            max_y_of_bob = -float('inf') 
+            
+            for j in range(i + 1, n):
+                bob_x, bob_y = points[j]
+                
+                # We are looking for a Bob that is below Alice and also below any previous valid Bob.
+                # The condition `bob_y <= alice_y` ensures Alice is the upper corner.
+                # The condition `bob_y > max_y_of_bob` ensures no previously found valid Bob
+                # (which would lie between i and j in the sorted array) is inside the current fence.
+                if bob_y <= alice_y and bob_y > max_y_of_bob:
+                    count += 1
+                    # Update max_y_of_bob to the current Bob's y-coordinate, as it now defines
+                    # the upper boundary for any subsequent valid Bobs for this Alice.
+                    max_y_of_bob = bob_y
+                    
+        return count
