@@ -1,0 +1,15 @@
+class Solution:
+    def findClosest(self, x: int, y: int, z: int) -> int:
+        distance_person1 = abs(x - z)
+        distance_person2 = abs(y - z)
+        
+        if distance_person1 < distance_person2:
+            # Person 1 is closer and will arrive first.
+            return 1
+        elif distance_person2 < distance_person1:
+            # Person 2 is closer and will arrive first.
+            return 2
+        else:
+            # Both are at the same distance, so they arrive simultaneously.
+            return 0    
+
