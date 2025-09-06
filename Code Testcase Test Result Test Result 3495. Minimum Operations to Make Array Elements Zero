@@ -1,0 +1,62 @@
+from typing import List
+
+# --- Optimized Helper Functions and Caches ---
+
+# Memoization caches are moved outside the class to be persistent
+# across multiple test cases in a single run.
+memo_f = {0: 0}
+memo_s = {0: 0}
+
+def f(n: int) -> int:
+    """
+    Calculates the number of "division-by-4" steps needed for n to become 0.
+    f(n) = f(n // 4) + 1 for n >= 4
+    This function now uses the global 'memo_f' cache.
+    """
+    if n in memo_f:
+        return memo_f[n]
+    
+    res = f(n // 4) + 1
+    memo_f[n] = res
+    return res
+
+def S(n: int) -> int:
+    """
+    Calculates the prefix sum of f(i) from i=1 to n.
+    S(n) = f(1) + f(2) + ... + f(n)
+    This function now uses the global 'memo_s' cache and calls the global f().
+    """
+    if n in memo_s:
+        return memo_s[n]
+    if n <= 0:
+        return 0
+
+    m = n // 4
+    # The recursive formula efficiently calculates the sum.
+    res = n + 4 * S(m - 1) + (n % 4 + 1) * f(m)
+    memo_s[n] = res
+    return res
+
+class Solution:
+    def minOperations(self, queries: List[List[int]]) -> int:
+        """
+        Calculates the minimum number of operations to reduce all elements to zero
+        for a series of queries, and returns the sum of these operations.
+        """
+        total_operations_sum = 0
+        
+        # The total number of "division-by-4" steps needed for a range [l, r]
+        # is the sum of f(x) for each x in that range.
+        # Since each operation provides two division steps (one for a, one for b),
+        # the total operations is ceil( (sum of f(x)) / 2 ).
+
+        for l, r in queries:
+            # Calculate sum of f(x) for x in [l, r] using the global helper function S(n).
+            sum_of_f = S(r) - S(l - 1)
+            
+            # Calculate ceil(sum_of_f / 2) using integer division.
+            ops_for_query = (sum_of_f + 1) // 2
+            
+            total_operations_sum += ops_for_query
+            
+        return total_operations_sum
