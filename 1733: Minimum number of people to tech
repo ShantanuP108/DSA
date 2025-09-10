@@ -1,0 +1,40 @@
+class Solution:
+    def minimumTeachings(self, n: int, languages: List[List[int]], friendships: List[List[int]]) -> int:
+        num_users = len(languages)
+        language_sets = [set(lang) for lang in languages]
+
+        # Step 1: Identify friendships that are "uncommunicative".
+        # We only need to solve the problem for these pairs, as the others can already talk.
+        uncommunicative_users = set()
+        for u, v in friendships:
+            # Adjust from 1-based user IDs to 0-based list indices.
+            u_idx, v_idx = u - 1, v - 1
+            
+            # Check if the two friends have any language in common.
+            # The .isdisjoint() method is a fast way to check for an empty intersection.
+            if language_sets[u_idx].isdisjoint(language_sets[v_idx]):
+                uncommunicative_users.add(u)
+                uncommunicative_users.add(v)
+
+        # If there are no uncommunicative friendships, we don't need to teach anyone.
+        if not uncommunicative_users:
+            return 0
+
+        # Step 2: For each language, count how many of the uncommunicative users would need to be taught.
+        min_teachings = num_users  # Initialize with the maximum possible value.
+        
+        # Iterate through each language from 1 to n.
+        for lang_to_teach in range(1, n + 1):
+            teach_count = 0
+            # Check every user involved in an uncommunicative friendship.
+            for user_id in uncommunicative_users:
+                # If this user doesn't already know the language we are considering,
+                # they would need to be taught.
+                user_idx = user_id - 1
+                if lang_to_teach not in language_sets[user_idx]:
+                    teach_count += 1
+            
+            # Keep track of the minimum count found so far.
+            min_teachings = min(min_teachings, teach_count)
+            
+        return min_teachings
