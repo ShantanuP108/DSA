@@ -1,0 +1,12 @@
+class Solution:
+    def doesAliceWin(self, s: str) -> bool:
+        vowels = {'a', 'e', 'i', 'o', 'u'}
+
+        # We just need to check if there is at least one vowel.
+        for char in s:
+            if char in vowels:
+                # If a single vowel exists, Alice has a winning strategy.
+                return True
+
+        # If the loop completes, no vowels were found. Alice cannot make a move.
+        return False
