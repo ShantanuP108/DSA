@@ -1,0 +1,27 @@
+import collections
+from typing import List
+class Solution:
+    def maxFreqSum(self, s: str) -> int:
+        vowels = {'a', 'e', 'i', 'o', 'u'}
+        vowel_counts = collections.defaultdict(int)
+        consonant_counts = collections.defaultdict(int)
+
+        # Populate frequency maps for vowels and consonants
+        for char in s:
+            if char in vowels:
+                vowel_counts[char] += 1
+            else:
+                consonant_counts[char] += 1
+
+        # Find the maximum frequency for vowels. If no vowels, it's 0.
+        max_vowel_freq = 0
+        if vowel_counts:
+            max_vowel_freq = max(vowel_counts.values())
+
+        # Find the maximum frequency for consonants. If no consonants, it's 0.
+        max_consonant_freq = 0
+        if consonant_counts:
+            max_consonant_freq = max(consonant_counts.values())
+
+        return max_vowel_freq + max_consonant_freq
+
