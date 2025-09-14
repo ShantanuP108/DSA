@@ -1,0 +1,65 @@
+from typing import List
+
+class Solution:
+    def spellchecker(self, wordlist: List[str], queries: List[str]) -> List[str]:
+        """
+        Implements a spellchecker with specific rules for case and vowel errors.
+
+        The method uses pre-processing to build efficient lookup structures:
+        1. A set for exact (case-sensitive) matches.
+        2. A dictionary for case-insensitive matches, mapping a lowercase word
+           to the first matching word from the original wordlist.
+        3. A dictionary for vowel-error matches, mapping a "devoweled" lowercase
+           word to the first matching word from the original wordlist.
+
+        Queries are then checked against these structures in the specified order
+        of precedence.
+        """
+        
+        # Helper function to create the vowel-error pattern of a word.
+        # It converts the word to lowercase and replaces all vowels with '*'.
+        def devowel(word: str) -> str:
+            vowels = "aeiou"
+            return "".join('*' if char in vowels else char for char in word.lower())
+
+        # 1. Pre-processing the wordlist into lookup structures
+        exact_match_set = set(wordlist)
+        cap_match_dict = {}
+        vowel_match_dict = {}
+
+        for word in wordlist:
+            lower_word = word.lower()
+            # Store the first occurrence for case-insensitive matches.
+            if lower_word not in cap_match_dict:
+                cap_match_dict[lower_word] = word
+            
+            devoweled_word = devowel(word)
+            # Store the first occurrence for vowel-error matches.
+            if devoweled_word not in vowel_match_dict:
+                vowel_match_dict[devoweled_word] = word
+
+        # 2. Process each query based on the precedence rules
+        result = []
+        for query in queries:
+            # Rule 1: Exact match (case-sensitive)
+            if query in exact_match_set:
+                result.append(query)
+                continue
+
+            # Rule 2: Capitalization match (case-insensitive)
+            lower_query = query.lower()
+            if lower_query in cap_match_dict:
+                result.append(cap_match_dict[lower_query])
+                continue
+
+            # Rule 3: Vowel error match
+            devoweled_query = devowel(query)
+            if devoweled_query in vowel_match_dict:
+                result.append(vowel_match_dict[devoweled_query])
+                continue
+            
+            # Rule 4: No match found
+            result.append("")
+            
+        return result
+
