@@ -1,0 +1,25 @@
+class Solution:
+    def replaceNonCoprimes(self, nums: List[int]) -> List[int]:
+        def gcd(a, b):
+            return math.gcd(a, b)
+
+        def lcm(a, b):
+            # The formula for LCM is (a * b) / GCD(a, b)
+            if a == 0 or b == 0:
+                return 0
+            return abs(a * b) // gcd(a, b)
+
+        result = []
+        for num in nums:
+            current_num = num
+            # While the result list is not empty and the current number is
+            # non-coprime with the last element in the list...
+            while result and gcd(result[-1], current_num) > 1:
+                # ...pop the last element and merge it with the current number.
+                last_element = result.pop()
+                current_num = lcm(last_element, current_num)
+            
+            # After all necessary merges, add the final resulting number to the list.
+            result.append(current_num)
+            
+        return result                    
