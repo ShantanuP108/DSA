@@ -1,0 +1,83 @@
+import heapq
+from collections import defaultdict
+from typing import List
+
+class FoodRatings:
+    """
+    A system that manages food ratings and can find the highest-rated food
+    for a given cuisine.
+
+    This implementation uses two main data structures for efficiency:
+    1.  `food_info`: A dictionary mapping each food name to an object containing
+        its current rating and cuisine. This allows for O(1) lookups and updates
+        of a food's rating.
+    
+    2.  `cuisine_heaps`: A dictionary mapping each cuisine to a min-heap. The heap
+        stores tuples of `(-rating, food_name)`. We use a negative rating to
+        simulate a max-heap, so the food with the highest rating will be at the
+        top. The food name is included as the second element in the tuple to
+        handle ties lexicographically.
+
+    The `changeRating` method updates the rating in `food_info` and adds the new
+    rating to the corresponding cuisine's heap. This creates "stale" entries in
+    the heap, which are handled lazily by the `highestRated` method.
+
+    The `highestRated` method repeatedly checks the top of the heap. If the rating
+    at the top is stale (i.e., it doesn't match the current rating in `food_info`),
+    it's popped, and the process repeats until a valid, up-to-date entry is found.
+    """
+
+    def __init__(self, foods: List[str], cuisines: List[str], ratings: List[int]):
+        # {food: {"rating": int, "cuisine": str}}
+        self.food_info = {}
+        # {cuisine: min_heap[(-rating, food)]}
+        self.cuisine_heaps = defaultdict(list)
+
+        for i in range(len(foods)):
+            food = foods[i]
+            cuisine = cuisines[i]
+            rating = ratings[i]
+            
+            self.food_info[food] = {"rating": rating, "cuisine": cuisine}
+            # Push (-rating, food) to simulate a max-heap and handle ties
+            heapq.heappush(self.cuisine_heaps[cuisine], (-rating, food))
+
+    def changeRating(self, food: str, newRating: int) -> None:
+        # Update the rating in our primary food data store
+        self.food_info[food]["rating"] = newRating
+        
+        # Get the cuisine to know which heap to update
+        cuisine = self.food_info[food]["cuisine"]
+        
+        # Add the new rating to the heap. We don't remove the old one;
+        # this is a "lazy update". The old, stale entries will be
+        # filtered out by highestRated.
+        heapq.heappush(self.cuisine_heaps[cuisine], (-newRating, food))
+
+    def highestRated(self, cuisine: str) -> str:
+        # Get the heap for the specific cuisine
+        heap = self.cuisine_heaps[cuisine]
+        
+        # Process the heap to find the highest-rated valid food
+        while heap:
+            # Peek at the top element (highest rating, smallest name for ties)
+            rating_neg, food = heap[0]
+            
+            # Check if this entry is up-to-date.
+            # If the rating in the heap matches the current rating of the food,
+            # this is the valid highest-rated food.
+            if -rating_neg == self.food_info[food]["rating"]:
+                return food
+            
+            # If not, this is a stale entry (from a previous rating).
+            # Pop it and check the next one.
+            heapq.heappop(heap)
+        
+        # This part should not be reached based on problem constraints
+        # (each cuisine will have at least one food).
+        return ""
+
+# Your FoodRatings object will be instantiated and called as such:
+# obj = FoodRatings(foods, cuisines, ratings)
+# obj.changeRating(food,newRating)
+# param_2 = obj.highestRated(cuisine)
