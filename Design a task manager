@@ -1,0 +1,92 @@
+import heapq
+from collections import defaultdict
+from typing import List
+
+class TaskManager:
+    """
+    A system to manage tasks with priorities for different users.
+
+    This implementation uses several data structures for efficiency:
+    1.  `task_info`: A dictionary mapping each `taskId` to its details, including
+        `userId` and `priority`. This allows for O(1) time complexity for finding
+        a task's information.
+    
+    2.  `priority_queue`: A min-heap that stores tuples of `(-priority, -taskId)`.
+        - The priority is negated to simulate a max-heap, ensuring the highest
+          priority task is at the top.
+        - The `taskId` is also negated to act as a tie-breaker, so if priorities
+          are equal, the task with the higher `taskId` comes first.
+    
+    3.  `removed_tasks`: A set that stores the `taskId` of any task that has been
+        explicitly removed via `rmv`. This supports a "lazy removal" strategy.
+
+    The `execTop` method handles this lazy system by repeatedly checking the top of
+    the heap. If the task at the top is in the `removed_tasks` set, or if its
+    priority doesn't match the current one (indicating a stale entry from an edit),
+    it is discarded. This continues until a valid, active task is found.
+    """
+
+    def __init__(self, tasks: List[List[int]]):
+        # {taskId: {"userId": int, "priority": int}}
+        self.task_info = {}
+        # A min-heap storing (-priority, -taskId) to simulate a max-heap
+        self.priority_queue = []
+        # A set to keep track of removed or outdated tasks for lazy removal
+        self.removed_tasks = set()
+
+        for user, task, priority in tasks:
+            self.task_info[task] = {"userId": user, "priority": priority}
+            self.priority_queue.append((-priority, -task))
+        
+        # Convert the list into a heap in O(n) time
+        heapq.heapify(self.priority_queue)
+
+    def add(self, userId: int, taskId: int, priority: int) -> None:
+        # If a task is re-added after being removed, un-mark it as removed.
+        self.removed_tasks.discard(taskId)
+        self.task_info[taskId] = {"userId": userId, "priority": priority}
+        heapq.heappush(self.priority_queue, (-priority, -taskId))
+
+    def edit(self, taskId: int, newPriority: int) -> None:
+        # An edit is handled by adding a new, higher-priority entry to the heap.
+        # The old entry becomes "stale" and will be ignored by execTop.
+        # We do NOT mark it as removed.
+        self.task_info[taskId]["priority"] = newPriority
+        # Push the new version of the task onto the heap
+        heapq.heappush(self.priority_queue, (-newPriority, -taskId))
+
+    def rmv(self, taskId: int) -> None:
+        # Mark the task as removed and delete its info
+        self.removed_tasks.add(taskId)
+        if taskId in self.task_info:
+            del self.task_info[taskId]
+
+    def execTop(self) -> int:
+        # Clean up stale entries from the top of the heap
+        while self.priority_queue:
+            priority_neg, taskId_neg = self.priority_queue[0]
+            task_id = -taskId_neg
+
+            # Condition 1: If the task ID was explicitly removed, it's stale.
+            if task_id in self.removed_tasks:
+                heapq.heappop(self.priority_queue)
+                continue
+
+            # Condition 2: If the task's priority in the heap doesn't match its
+            # current priority in task_info, it's a stale entry from a past edit.
+            if -priority_neg != self.task_info[task_id]["priority"]:
+                heapq.heappop(self.priority_queue)
+                continue
+            
+            # Found the valid, highest-priority task
+            user_id = self.task_info[task_id]["userId"]
+            
+            # Pop the task from the heap and remove it from the system
+            heapq.heappop(self.priority_queue)
+            self.rmv(task_id)
+            
+            return user_id
+
+        # If the heap becomes empty, no tasks are available
+        return -1
+
