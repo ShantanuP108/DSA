@@ -1,0 +1,31 @@
+class Spreadsheet:
+
+    def __init__(self, rows: int):
+        self.grid = {}
+        self.num_rows = rows
+
+    def _evaluate_term(self, term: str) -> int:
+        if term.isdigit():
+            return int(term)
+        return self.grid.get(term, 0)
+
+    def setCell(self, cell: str, value: int) -> None:
+        self.grid[cell] = value
+        
+    def resetCell(self, cell: str) -> None:
+        if cell in self.grid:
+            del self.grid[cell]
+        
+    def getValue(self, formula: str) -> int:
+        expression = formula[1:]
+        term1_str, term2_str = expression.split('+')
+
+        val1 = self._evaluate_term(term1_str)
+        val2 = self._evaluate_term(term2_str)
+
+        return val1 + val2
+# Your Spreadsheet object will be instantiated and called as such:
+# obj = Spreadsheet(rows)
+# obj.setCell(cell,value)
+# obj.resetCell(cell)
+# param_3 = obj.getValue(formula)
