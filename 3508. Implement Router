@@ -1,0 +1,64 @@
+class Router:
+
+    def __init__(self, memoryLimit: int):
+        self.memoryLimit = memoryLimit
+        # Queue for FIFO operations (eviction and forwarding)
+        self.packets = collections.deque()
+        # Set for fast duplicate checking
+        self.packet_set = set()
+        # Dictionary mapping destination to a sorted list of timestamps
+        self.dest_timestamps = collections.defaultdict(list)
+
+    def addPacket(self, source: int, destination: int, timestamp: int) -> bool:
+        packet = (source, destination, timestamp)
+        if packet in self.packet_set:
+            return False
+
+        # If memory is full, evict the oldest packet
+        if len(self.packets) == self.memoryLimit:
+            oldest_packet = self.packets.popleft()
+            self.packet_set.remove(oldest_packet)
+            # Remove the corresponding timestamp for the oldest packet's destination
+            oldest_dest = oldest_packet[1]
+            # Since timestamps are added in order, the oldest is at the front
+            self.dest_timestamps[oldest_dest].pop(0)
+
+        # Add the new packet to all data structures
+        self.packets.append(packet)
+        self.packet_set.add(packet)
+        self.dest_timestamps[destination].append(timestamp)
+        return True
+
+    def forwardPacket(self) -> list[int]:
+        if not self.packets:
+            return []
+
+        # Get the oldest packet (FIFO)
+        packet_to_forward = self.packets.popleft()
+        
+        # Remove it from the other data structures
+        self.packet_set.remove(packet_to_forward)
+        dest = packet_to_forward[1]
+        self.dest_timestamps[dest].pop(0)
+
+        return list(packet_to_forward)
+
+    def getCount(self, destination: int, startTime: int, endTime: int) -> int:
+        if destination not in self.dest_timestamps:
+            return 0
+            
+        timestamps = self.dest_timestamps[destination]
+        
+        # Use binary search to find the start and end indices
+        start_index = bisect.bisect_left(timestamps, startTime)
+        end_index = bisect.bisect_right(timestamps, endTime)
+        
+        return end_index - start_index
+        
+
+
+# Your Router object will be instantiated and called as such:
+# obj = Router(memoryLimit)
+# param_1 = obj.addPacket(source,destination,timestamp)
+# param_2 = obj.forwardPacket()
+# param_3 = obj.getCount(destination,startTime,endTime)
