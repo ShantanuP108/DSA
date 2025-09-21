@@ -1,0 +1,97 @@
+import heapq
+from collections import defaultdict
+
+class MovieRentingSystem:
+    def __init__(self, n: int, entries: list[list[int]]):
+        # price lookup
+        self.price = {}  # (shop,movie) -> price
+
+        # heaps
+        # unrented[movie] holds (price, shop, entry_id)
+        self.unrented = defaultdict(list)
+        # rented holds (price, shop, movie, entry_id)
+        self.rented = []
+
+        # active mappings to validate heap entries
+        self.active_unrented_id = {}   # (shop,movie) -> entry_id (or None)
+        self.active_rented_id = {}     # (shop,movie) -> entry_id (or None)
+
+        # status (0 = unrented, 1 = rented) - optional but convenient
+        self.status = {}
+
+        # global monotonically increasing id for every push
+        self._next_id = 1
+
+        for shop, movie, p in entries:
+            self.price[(shop, movie)] = p
+            self.status[(shop, movie)] = 0
+
+            eid = self._next_id; self._next_id += 1
+            self.active_unrented_id[(shop, movie)] = eid
+            self.active_rented_id[(shop, movie)] = None
+
+            heapq.heappush(self.unrented[movie], (p, shop, eid))
+
+    def _new_id(self):
+        eid = self._next_id
+        self._next_id += 1
+        return eid
+
+    def search(self, movie: int) -> list[int]:
+        """Return up to 5 shops with unrented copies for `movie`, sorted by (price, shop)."""
+        res = []
+        heap = self.unrented[movie]  # defaultdict ensures list exists
+        temp = []
+
+        while heap and len(res) < 5:
+            p, s, eid = heapq.heappop(heap)
+            # valid iff this entry id equals the currently active unrented id and status is unrented
+            if self.active_unrented_id.get((s, movie)) == eid and self.status.get((s, movie), 1) == 0:
+                res.append(s)
+                temp.append((p, s, eid))
+            # else stale -> skip
+        # push back valid items
+        for item in temp:
+            heapq.heappush(heap, item)
+        return res
+
+    def rent(self, shop: int, movie: int) -> None:
+        """Rent movie from shop. Called only when currently unrented (per constraints)."""
+        # mark rented
+        self.status[(shop, movie)] = 1
+        # invalidate any active unrented entry for this pair
+        self.active_unrented_id[(shop, movie)] = None
+
+        # push a new rented entry with a fresh id and record it as active
+        rid = self._new_id()
+        self.active_rented_id[(shop, movie)] = rid
+        heapq.heappush(self.rented, (self.price[(shop, movie)], shop, movie, rid))
+
+    def drop(self, shop: int, movie: int) -> None:
+        """Return a previously rented movie."""
+        # mark unrented
+        self.status[(shop, movie)] = 0
+
+        # invalidate any active rented entry for this pair
+        self.active_rented_id[(shop, movie)] = None
+
+        # create new unrented entry (with unique id) and set it active
+        uid = self._new_id()
+        self.active_unrented_id[(shop, movie)] = uid
+        heapq.heappush(self.unrented[movie], (self.price[(shop, movie)], shop, uid))
+
+    def report(self) -> list[list[int]]:
+        """Return up to 5 cheapest currently rented movies as [shop, movie]."""
+        res = []
+        temp = []
+        while self.rented and len(res) < 5:
+            p, s, m, eid = heapq.heappop(self.rented)
+            # valid only if this entry id equals currently active rented id and status is rented
+            if self.active_rented_id.get((s, m)) == eid and self.status.get((s, m), 0) == 1:
+                res.append([s, m])
+                temp.append((p, s, m, eid))
+            # else stale -> skip
+        # re-push valid ones back
+        for item in temp:
+            heapq.heappush(self.rented, item)
+        return res
