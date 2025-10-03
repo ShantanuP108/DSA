@@ -1,0 +1,47 @@
+import heapq
+class Solution:
+    def trapRainWater(self, heightMap: List[List[int]]) -> int:
+        if not heightMap or not heightMap[0]:
+            return 0
+    
+        m, n = len(heightMap), len(heightMap[0])
+        
+        # Visited array to track processed cells
+        visited = [[False] * n for _ in range(m)]
+        
+        # Min-heap to process cells by height
+        heap = []
+        
+        # Add all boundary cells to the heap - these form the "wall"
+        for i in range(m):
+            for j in range(n):
+                if i == 0 or i == m-1 or j == 0 or j == n-1:
+                    heapq.heappush(heap, (heightMap[i][j], i, j))
+                    visited[i][j] = True
+        
+        # Directions for adjacent cells
+        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        
+        result = 0
+        
+        while heap:
+            boundary_height, x, y = heapq.heappop(heap)
+            
+            # Check all 4 adjacent cells
+            for dx, dy in directions:
+                nx, ny = x + dx, y + dy
+                
+                # If the adjacent cell is within bounds and not visited
+                if 0 <= nx < m and 0 <= ny < n and not visited[nx][ny]:
+                    # Water trapped at (nx, ny) = max(0, boundary_height - cell_height)
+                    cell_height = heightMap[nx][ny]
+                    if cell_height < boundary_height:
+                        result += boundary_height - cell_height
+                    
+                    # Push the neighbor with the effective height
+                    effective_height = max(boundary_height, cell_height)
+                    heapq.heappush(heap, (effective_height, nx, ny))
+                    visited[nx][ny] = True
+        
+        return result                    
+        
