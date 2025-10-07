@@ -1,0 +1,35 @@
+from collections import defaultdict
+import bisect
+
+class Solution:
+    def avoidFlood(self, rains: List[int]) -> List[int]:
+        n = len(rains)
+        ans = [-1] * n
+        full_lakes = {}
+        dry_days = []
+        for i in range(n):
+            if rains[i] == 0:
+                dry_days.append(i)
+                ans[i] = 1
+            else:
+                lake = rains[i]
+                if lake in full_lakes:
+                    target_day = full_lakes[lake]
+                    found = False
+                    idx_to_remove = -1
+                    for idx, dry_day in enumerate(dry_days):
+                        if dry_day  > target_day:
+                            idx_to_remove = idx
+                            found = True
+                            break
+                    if not found:
+                        return []
+                    dry_day = dry_days[idx_to_remove]
+                    ans[dry_day]  = lake
+
+                    dry_days.pop(idx_to_remove)
+
+                full_lakes[lake] = i 
+        for day in dry_days:
+            ans[day] = 1
+        return ans                  
